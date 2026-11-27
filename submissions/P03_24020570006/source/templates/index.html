@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mandi Price Forecasting System | Azadpur Mandi (Onion & Tomato)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-gradient-to-r from-emerald-800 via-teal-800 to-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-emerald-500 rounded-lg text-white shadow-md">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Azadpur Mandi Price Forecasting System</h1>
+                    <p class="text-xs text-emerald-200">SDG 2: Zero Hunger &bull; SDG 12: Responsible Consumption &amp; Production &bull; Azadpur APMC, Delhi</p>
+                </div>
+            </div>
+
+            <!-- Commodity Tabs & Badges -->
+            <div class="flex items-center space-x-3">
+                <button id="btnTomato" onclick="switchCrop('tomato')" class="px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow bg-white text-emerald-900 border border-emerald-300">
+                    🍅 Tomato
+                </button>
+                <button id="btnOnion" onclick="switchCrop('onion')" class="px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-emerald-900/40 text-white hover:bg-emerald-700/50 border border-transparent">
+                    🧅 Onion
+                </button>
+                <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
+                    ● Azadpur APMC Real Data
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 space-y-6">
+
+        <!-- Prominent Data Source & Scraping Clarification Notice -->
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-xl shadow-sm">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 text-amber-600 mt-0.5">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-bold text-amber-900">Market Mandi &amp; Data Sourcing Disclosure</h3>
+                    <p class="text-xs text-amber-800 mt-1 leading-relaxed">
+                        <strong>Market Focused:</strong> <strong>Azadpur Mandi (APMC, Delhi)</strong> — Asia's largest wholesale fruits and vegetables market.
+                        <br/>
+                        <strong>Data Ingestion Note:</strong> Automated real-time scraping directly from official portal links (<code>data.gov.in</code> and <code>agmarknet.gov.in</code>) was blocked by anti-bot protections, session CAPTCHAs, and single-day API pagination constraints. As an authentic, non-synthetic alternative, high-fidelity real mandi time-series data was sourced and parsed directly from <strong><a href="https://acrop.app/prices/tomato#price-history" target="_blank" class="underline font-semibold hover:text-amber-950">acrop.app (Agmarknet Live Mirror)</a></strong> for the 30-day reporting window (20 Oct 2026 – 18 Nov 2026).
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Status Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Mandi &amp; Commodity</p>
+                    <p id="cardCommodity" class="text-2xl font-bold text-slate-800 capitalize mt-1">Tomato</p>
+                    <p class="text-xs font-medium text-emerald-700">Azadpur Mandi (Delhi)</p>
+                </div>
+                <div class="text-3xl" id="cropIcon">🍅</div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Latest Reported Price</p>
+                    <p id="cardLatestPrice" class="text-2xl font-bold text-emerald-600 mt-1">₹ 2,750</p>
+                    <p id="cardLatestDate" class="text-xs text-slate-400">18 Nov 2026 (₹/quintal)</p>
+                </div>
+                <div class="p-3 bg-emerald-50 rounded-xl text-emerald-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Best ML Model</p>
+                    <p id="cardBestModel" class="text-base font-bold text-indigo-700 mt-1 truncate">Linear Regression</p>
+                    <p id="cardBestMAE" class="text-xs text-slate-500">MAE: ₹ 136.17 / quintal</p>
+                </div>
+                <div class="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Early-Warning Signal</p>
+                    <span id="badgeVolatility" class="inline-block mt-2 px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        Stable Trend
+                    </span>
+                    <p class="text-xs text-slate-400 mt-1">7-Day volatility outlook</p>
+                </div>
+                <div class="p-3 bg-amber-50 rounded-xl text-amber-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Section: Historical + 7-Day Forecast -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-wrap justify-between items-center gap-4 border-b border-slate-100 pb-4">
+                <div>
+                    <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <span>Azadpur Mandi Trajectory &amp; 7-Day Machine Learning Forecast</span>
+                        <span class="text-xs font-normal text-slate-600 bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full">Azadpur APMC (Real Time Series)</span>
+                    </h2>
+                    <p class="text-xs text-slate-500">Solid line indicates observed 30-day prices; dashed line represents next-week recursive machine learning forecast.</p>
+                </div>
+                <div class="flex items-center gap-4 text-xs font-medium text-slate-600">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-600"></span> Reported Price</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-600"></span> ML 7-Day Forecast</span>
+                </div>
+            </div>
+            
+            <div class="h-80 w-full relative">
+                <canvas id="priceChart"></canvas>
+            </div>
+        </div>
+
+        <!-- 7-Day Forecast Cards Table -->
+        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-slate-900">7-Day Ahead Forecast Breakdown &amp; Volatility Warnings</h3>
+                <span class="text-xs text-slate-400">Azadpur APMC Projection</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3" id="forecastCardsContainer">
+                <!-- Forecast items will be injected by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Algorithms Benchmark & Evaluation Metrics Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Table of 5 Models Metrics -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-base font-bold text-slate-900">Model Performance Evaluation (Test Split: 7 Days)</h3>
+                    <span class="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-md">Metrics: RMSE, MAE, MAPE, R²</span>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-left text-xs border border-slate-200 rounded-lg">
+                        <thead class="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="py-3 px-4">Regression Algorithm</th>
+                                <th class="py-3 px-3">RMSE (₹)</th>
+                                <th class="py-3 px-3">MAE (₹)</th>
+                                <th class="py-3 px-3">MAPE (%)</th>
+                                <th class="py-3 px-3">R² Score</th>
+                                <th class="py-3 px-3">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="metricsTableBody" class="divide-y divide-slate-100">
+                            <!-- Injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <strong>Techniques applied:</strong> Lag Features ($t-1, t-2, t-3$), Market Arrival Volumes, 3-Day Rolling Average &amp; Volatility, and Outlier Treatment via Interquartile Range (IQR).
+                </div>
+            </div>
+
+            <!-- Model Evaluation Comparison Chart -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h3 class="text-base font-bold text-slate-900">MAE Comparison Across Models</h3>
+                <p class="text-xs text-slate-500">Lower Mean Absolute Error indicates superior forecasting accuracy.</p>
+                <div class="h-64 w-full relative">
+                    <canvas id="modelsBarChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project & Publication Metadata Section -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gradient-to-br from-slate-900 to-slate-800 text-white p-8 rounded-2xl shadow-md">
+            <div>
+                <h4 class="text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">Sustainable Development Goals (SDGs)</h4>
+                <ul class="space-y-2 text-sm text-slate-300">
+                    <li class="flex items-start gap-2">
+                        <span class="text-emerald-400 font-bold">● SDG 2 (Zero Hunger):</span>
+                        <span>Provides price protection to farmers trading at Azadpur Mandi and stabilizes consumer access.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <span class="text-emerald-400 font-bold">● SDG 12 (Responsible Consumption &amp; Production):</span>
+                        <span>Mitigates post-harvest spoilage and distress sales through accurate price and arrival foresight.</span>
+                    </li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-indigo-400 text-xs font-bold uppercase tracking-wider mb-2">Research Publication Opportunity</h4>
+                <p class="text-xs text-slate-300 mb-2">Target format: <span class="text-white font-medium">Short Communication – Azadpur Mandi Price Forecasting</span></p>
+                <div class="grid grid-cols-1 gap-1 text-xs text-slate-300">
+                    <p>• <strong>Computers and Electronics in Agriculture:</strong> Special Issue – "Explainable AI in Agriculture" (31 Jan 2027)</p>
+                    <p>• <strong>Nature Portfolio:</strong> Collection – "AI-Driven Smart Agriculture" (18 Mar 2027)</p>
+                    <p>• <strong>Current Science:</strong> Research Communication (Rolling submissions)</p>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+        Azadpur Mandi Price Forecasting System &bull; Real Agmarknet Market Mirror (acrop.app) &bull; Localhost ML Inference Engine
+    </footer>
+
+    <!-- Application Script -->
+    <script>
+        const rawData = {{ data | tojson }};
+        let currentCrop = 'tomato';
+        let priceChartInstance = null;
+        let barChartInstance = null;
+
+        function switchCrop(crop) {
+            currentCrop = crop;
+            const btnTomato = document.getElementById('btnTomato');
+            const btnOnion = document.getElementById('btnOnion');
+            if (crop === 'tomato') {
+                btnTomato.className = "px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow bg-white text-emerald-900 border border-emerald-300";
+                btnOnion.className = "px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-emerald-900/40 text-white hover:bg-emerald-700/50 border border-transparent";
+            } else {
+                btnOnion.className = "px-4 py-2 rounded-lg font-semibold text-sm transition-all shadow bg-white text-emerald-900 border border-emerald-300";
+                btnTomato.className = "px-4 py-2 rounded-lg font-semibold text-sm transition-all bg-emerald-900/40 text-white hover:bg-emerald-700/50 border border-transparent";
+            }
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const cropData = rawData[currentCrop];
+            if (!cropData) return;
+
+            // Update top cards
+            document.getElementById('cardCommodity').textContent = currentCrop === 'tomato' ? 'Tomato' : 'Onion';
+            document.getElementById('cropIcon').textContent = currentCrop === 'tomato' ? '🍅' : '🧅';
+            
+            const history = cropData.historical_data;
+            const latest = history[history.length - 1];
+            document.getElementById('cardLatestPrice').textContent = `₹ ${Number(latest.median_price).toLocaleString()}`;
+            document.getElementById('cardLatestDate').textContent = `${latest.date} (Azadpur Mandi)`;
+
+            document.getElementById('cardBestModel').textContent = cropData.best_model;
+            const bestMetrics = cropData.results[cropData.best_model];
+            document.getElementById('cardBestMAE').textContent = `MAE: ₹ ${bestMetrics.mae} / quintal`;
+
+            // Early-warning badge
+            const nextDayPred = cropData.future_forecast[0];
+            const badge = document.getElementById('badgeVolatility');
+            if (nextDayPred.volatility_flag.includes('Alert')) {
+                badge.className = "inline-block mt-2 px-2.5 py-1 text-xs font-semibold rounded-full bg-rose-100 text-rose-800 border border-rose-200";
+                badge.textContent = `⚠ ${nextDayPred.volatility_flag} (${nextDayPred.pct_change}%)`;
+            } else {
+                badge.className = "inline-block mt-2 px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200";
+                badge.textContent = `✓ ${nextDayPred.volatility_flag} (${nextDayPred.pct_change > 0 ? '+' : ''}${nextDayPred.pct_change}%)`;
+            }
+
+            // Render 7-day forecast cards
+            const forecastContainer = document.getElementById('forecastCardsContainer');
+            forecastContainer.innerHTML = '';
+            cropData.future_forecast.forEach((f, idx) => {
+                const isSpike = f.volatility_flag.includes('Alert');
+                const card = document.createElement('div');
+                card.className = `p-3 rounded-xl border text-center transition-all ${isSpike ? 'bg-rose-50 border-rose-200' : 'bg-slate-50 border-slate-200'}`;
+                card.innerHTML = `
+                    <p class="text-xs font-semibold text-slate-500">Day +${idx+1}</p>
+                    <p class="text-xs text-slate-400 mb-1">${f.date.slice(5)}</p>
+                    <p class="text-base font-bold text-slate-800">₹ ${f.predicted_price.toLocaleString()}</p>
+                    <span class="inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full font-medium ${f.pct_change >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
+                        ${f.pct_change >= 0 ? '+' : ''}${f.pct_change}%
+                    </span>
+                `;
+                forecastContainer.appendChild(card);
+            });
+
+            // Populate Metrics Table
+            const tbody = document.getElementById('metricsTableBody');
+            tbody.innerHTML = '';
+            const modelNames = Object.keys(cropData.results);
+            
+            modelNames.forEach(mName => {
+                const m = cropData.results[mName];
+                const isBest = mName === cropData.best_model;
+                const tr = document.createElement('tr');
+                tr.className = isBest ? "bg-emerald-50/60 font-semibold" : "hover:bg-slate-50";
+                tr.innerHTML = `
+                    <td class="py-3 px-4 flex items-center gap-2">
+                        ${isBest ? '<span class="text-emerald-600">★</span>' : ''}
+                        <span>${mName}</span>
+                    </td>
+                    <td class="py-3 px-3">₹ ${m.rmse}</td>
+                    <td class="py-3 px-3 text-emerald-700">₹ ${m.mae}</td>
+                    <td class="py-3 px-3">${m.mape}%</td>
+                    <td class="py-3 px-3 font-mono">${m.r2}</td>
+                    <td class="py-3 px-3">
+                        <span class="px-2 py-0.5 text-[11px] rounded-full ${isBest ? 'bg-emerald-200 text-emerald-900 font-bold' : 'bg-slate-100 text-slate-600'}">
+                            ${isBest ? 'Best Performer' : 'Evaluated'}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Update Price Line Chart
+            renderPriceChart(cropData);
+
+            // Update Model Comparison Bar Chart
+            renderBarChart(cropData);
+        }
+
+        function renderPriceChart(cropData) {
+            const history = cropData.historical_data;
+            const future = cropData.future_forecast;
+
+            const labels = [
+                ...history.map(d => d.date.slice(5)),
+                ...future.map(f => f.date.slice(5) + ' (Pred)')
+            ];
+
+            const histPrices = history.map(d => d.median_price);
+            const futurePrices = [
+                ...Array(history.length - 1).fill(null),
+                history[history.length - 1].median_price,
+                ...future.map(f => f.predicted_price)
+            ];
+
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            if (priceChartInstance) {
+                priceChartInstance.destroy();
+            }
+
+            priceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Azadpur Reported Price (₹/quintal)',
+                            data: [...histPrices, ...Array(future.length).fill(null)],
+                            borderColor: '#059669',
+                            backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.2,
+                            pointRadius: 3
+                        },
+                        {
+                            label: '7-Day ML Forecast (₹/quintal)',
+                            data: futurePrices,
+                            borderColor: '#4f46e5',
+                            borderDash: [6, 6],
+                            backgroundColor: 'rgba(79, 70, 229, 0.05)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.2,
+                            pointRadius: 4,
+                            pointBackgroundColor: '#4f46e5'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ₹ ${context.parsed.y} / quintal`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                callback: val => '₹' + val
+                            },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { maxTicksLimit: 12 }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderBarChart(cropData) {
+            const models = Object.keys(cropData.results);
+            const maeValues = models.map(m => cropData.results[m].mae);
+            const backgroundColors = models.map(m => m === cropData.best_model ? '#059669' : '#94a3b8');
+
+            const ctx = document.getElementById('modelsBarChart').getContext('2d');
+            if (barChartInstance) {
+                barChartInstance.destroy();
+            }
+
+            barChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: models.map(m => m.split(' ')[0]),
+                    datasets: [{
+                        label: 'MAE (₹)',
+                        data: maeValues,
+                        backgroundColor: backgroundColors,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => ` MAE: ₹ ${ctx.parsed.y}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: v => '₹' + v },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        // Initial render
+        renderDashboard();
+    </script>
+</body>
+</html>
